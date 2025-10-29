@@ -1,10 +1,12 @@
-import { Link  } from "react-router"
+import { Link  } from "react-router-dom"
 import { Input } from "../../components/input"
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
 
-import {auth, db } from '../../services/firebase'
+import {auth } from '../../services/firebase'
 import {signInWithEmailAndPassword} from 'firebase/auth'
+
+import { toast } from 'react-toastify'
 
 export function Login () {
 
@@ -23,11 +25,14 @@ export function Login () {
 
         signInWithEmailAndPassword(auth, email, password)
         .then(()=>{
-              console.log ('LOGADO COM SUCESSO!')
+              
               navigate ('/admin', {replace : true });
+              toast.success('Login realizado com sucesso!')
+
         })
         .catch((error)=>{
             console.log("ERRO AO FAZER O LOGIN : " + error);
+            toast.error ('Usuário ou senha inválidos!')
         })
     }
 
@@ -55,7 +60,7 @@ export function Login () {
 
             <button
             type="submit"
-             className="h-9 bg-blue-600 rounded border-0 text-lg text-white font-bold">
+             className="h-9 bg-blue-600 rounded border-0 text-lg text-white font-bold cursor-pointer">
                 Acessar
                 </button>
            </form>

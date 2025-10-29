@@ -1,36 +1,123 @@
 import { Social } from '../../components/social'
-import { FaLinkedin, FaGithub, FaInstagram} from 'react-icons/fa'
-import { Link  } from 'react-router'
+import { FaLinkedin, FaGithub} from 'react-icons/fa'
+
+import { useState, useEffect } from 'react'
+
+import { db } from '../../services/firebase'
+
+import {
+ getDocs,
+ collection, 
+ orderBy, 
+ query, 
+ doc, 
+ getDoc
+} from 'firebase/firestore'
+
+interface LinkProps {
+  id: string,
+  url : string,
+  bg: string,
+  name: string,
+  color: string,
+}
+
+interface SocialLinksProps {
+    linkedin: string, 
+    github : string
+}
 
 
 export function Home () {
+
+    const [links, setLinks] = useState<LinkProps[]>([])
+    const [socialLinks, setSocialLinks] = useState<SocialLinksProps>()
+ 
+    useEffect(()=>{
+        function loadLinks(){
+
+            const linksRef = collection(db, "links")
+            const queryRef = query(linksRef, orderBy("created" , "asc"))
+
+            getDocs(queryRef)
+            .then((snapshot)=>{
+
+                let lista = [] as LinkProps[];
+
+                snapshot.forEach((doc)=>{
+                    lista.push({
+                        id:doc.id,
+                        name: doc.data().name,
+                        url: doc.data().url,
+                        bg: doc.data().bg,
+                        color: doc.data().color
+                    });
+                })
+
+                setLinks (lista);
+            })
+        }
+
+        loadLinks()
+
+    },[])
+
+    useEffect (()=>{
+     function loadSocial () {
+         const docRef = doc(db, "social", "link")
+      getDoc(docRef)
+      .then((snapshot)=>{
+        if (snapshot.data !== undefined) {
+            setSocialLinks ({
+                linkedin: snapshot.data()?.linkedin,
+                github: snapshot.data()?.github,
+            })
+        }
+      })
+     }
+
+     loadSocial();
+    },[])
+
+
     return (
         <div className="flex flex-col w-full py-4 items-center justify-center"> 
             <h1 className="md:text-4xl text-3xl font-bold text-white mt-20"> Vitor </h1>
             <span className="text-gray-50 mb-5 mt-3"> Veja meus links 👇</span>
 
             <main className="flex flex-col w-11/12 max-w-xl text-center"> 
-                <section className="bg-whit e mb-4 w-full py-2 rounded-lg select-none cursor-pointer transition-transform hover:scale-105">
+                
+                 {links.map ((link)=>(
+                    <section 
+                    style={{ backgroundColor: link.bg}}
+                    key={link.id}
+                    className="bg-white mb-4 w-full py-2 rounded-lg select-none cursor-pointer transition-transform hover:scale-105">
                     
-                    <a href='https://www.linkedin.com/in/vitor-fernandes-31a42336b' target='_blank'>
-                        <p className="text-base md:text-lg">
-                            Perfil Linkedin
-                        </p>
+                    <a href={link.url} target='_blank'>
+                        <p 
+                        style={{color: link.color}}
+                        className="text-base md:text-lg">
+                            {link.name}
+                        </p> 
                     </a>
                    
                 </section>
 
-                <footer className="flex justify-center gap-3 my-4">
+                 ))}
+
+               {socialLinks && Object.keys(socialLinks).length > 0 && (
+                  <footer className="flex justify-center gap-3 my-4">
                      
-                     <Social url = "https://www.linkedin.com/in/vitor-fernandes-31a42336b">
+                     <Social url = {socialLinks?.linkedin}>
                      <FaLinkedin size={35} color='#FFF '/>
                       </Social>
-                     <Social url = "https://github.com/vitorrrfernandes">
+                     <Social url =  {socialLinks?.github}>
                      <FaGithub size={35} color='#FFF '/>
                       </Social>
 
                      
                 </footer>
+               )}
 
             </main>
         </div>
